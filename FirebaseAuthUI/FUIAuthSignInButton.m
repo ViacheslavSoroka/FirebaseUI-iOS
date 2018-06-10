@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** @var kCornerRadius
     @brief Corner radius of the button.
  */
-static const int kCornerRadius = 5;
+static const int kCornerRadius = 10;
 
 /** @var kDropShadowAlpha
     @brief Opacity of the drop shadow of the button.
@@ -61,7 +61,7 @@ static const CGFloat kFontSize = 16.0f;
     self.backgroundColor = backgroundColor;
     [self setTitle:text forState:UIControlStateNormal];
     [self setTitleColor:textColor forState:UIControlStateNormal];
-    self.titleLabel.font = [UIFont boldSystemFontOfSize:kFontSize];
+    self.titleLabel.font = [UIFont systemFontOfSize:kFontSize];
     self.titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
     [self setImage:image forState:UIControlStateNormal];
     
