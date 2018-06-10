@@ -96,7 +96,7 @@ static NSString *const kSignInWithGoogle = @"SignInWithGoogle";
 }
 
 - (UIColor *)buttonBackgroundColor {
-  return [UIColor colorWithRed:211/255 green:31/255 blue:39/255 alpha:1];
+  return [UIColor colorWithRed:211.0/255.0 green:31.0/255.0 blue:39.0/255.0 alpha:1];
 }
 
 - (UIColor *)buttonTextColor {

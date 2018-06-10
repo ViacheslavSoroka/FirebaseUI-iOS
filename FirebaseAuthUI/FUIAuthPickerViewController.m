@@ -134,7 +134,7 @@ static const CGFloat kButtonContainerCenterOffset3x = 70.5;
     NSArray *constr = @[[container.leftAnchor constraintEqualToAnchor:view.leftAnchor
                                                              constant:is3X ? kSignInButtonPadding3X : kSignInButtonPadding2X],
                         [container.rightAnchor constraintEqualToAnchor:view.rightAnchor
-                                                              constant:is3X ? kSignInButtonPadding3X : kSignInButtonPadding2X],
+                                                              constant:-(is3X ? kSignInButtonPadding3X : kSignInButtonPadding2X)],
                         [container.centerYAnchor constraintEqualToAnchor:view.centerYAnchor
                                                               constant:(is3X
                                                                         ? kButtonContainerCenterOffset3x
@@ -167,6 +167,11 @@ static const CGFloat kButtonContainerCenterOffset3x = 70.5;
                         action:@selector(signInWithEmail)
               forControlEvents:UIControlEventTouchUpInside];
         emailButton.accessibilityIdentifier = kEmailButtonAccessibilityID;
+        
+        [emailButton.heightAnchor constraintEqualToConstant:(is3X
+                                                             ? kSignInButtonHeight3X
+                                                             : kSignInButtonHeight2X)].active = YES;
+        
         [container addArrangedSubview:emailButton];
     }
 }
