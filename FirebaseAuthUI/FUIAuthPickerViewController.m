@@ -67,12 +67,12 @@ static const CGFloat kSignInButtonVerticalMargin3x = 17.7;
 /** @var kButtonContainerCenterOffset2x
  @brief The 2x center offset.
  */
-static const CGFloat kButtonContainerCenterOffset2x = 63.5;
+static const CGFloat kButtonContainerCenterOffset2x = 41;
 
 /** @var kButtonContainerCenterOffset3x
  @brief The 3x center offset.
  */
-static const CGFloat kButtonContainerCenterOffset3x = 70.5;
+static const CGFloat kButtonContainerCenterOffset3x = 48.5;
 
 @interface FUIAuthPickerViewController ()
 @property (nonatomic, strong) UIView *buttonContainerView;
