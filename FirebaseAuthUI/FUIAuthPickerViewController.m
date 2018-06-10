@@ -114,12 +114,6 @@ static const CGFloat kButtonContainerCenterOffset3x = 70.5;
                                     target:nil
                                     action:nil];
     
-    NSInteger numberOfButtons = self.authUI.providers.count;
-    BOOL showEmailButton = !self.authUI.signInWithEmailHidden;
-    if (showEmailButton) {
-        ++numberOfButtons;
-    }
-    
     BOOL is3X = UIScreen.mainScreen.scale > 2;
     
     UIView *view = self.view;
@@ -141,20 +135,7 @@ static const CGFloat kButtonContainerCenterOffset3x = 70.5;
                                                                         : kButtonContainerCenterOffset2x)]];
     [NSLayoutConstraint activateConstraints:constr];
     
-    for (id<FUIAuthProvider> providerUI in self.authUI.providers) {
-        UIButton *providerButton =
-        [[FUIAuthSignInButton alloc] initWithFrame:CGRectZero providerUI:providerUI];
-        [providerButton addTarget:self
-                           action:@selector(didTapSignInButton:)
-                 forControlEvents:UIControlEventTouchUpInside];
-        
-        [providerButton.heightAnchor constraintEqualToConstant:(is3X
-                                                                ? kSignInButtonHeight3X
-                                                                : kSignInButtonHeight2X)].active = YES;
-        [container addArrangedSubview:providerButton];
-    }
-    
-    if (showEmailButton) {
+    if (!self.authUI.signInWithEmailHidden) {
         UIColor *emailButtonBackgroundColor =
         [UIColor colorWithRed:35/255.f green:136/255.f blue:196/255.f alpha:1.0];
         UIButton *emailButton =
@@ -173,6 +154,19 @@ static const CGFloat kButtonContainerCenterOffset3x = 70.5;
                                                              : kSignInButtonHeight2X)].active = YES;
         
         [container addArrangedSubview:emailButton];
+    }
+    
+    for (id<FUIAuthProvider> providerUI in [self.authUI.providers reverseObjectEnumerator]) {
+        UIButton *providerButton =
+        [[FUIAuthSignInButton alloc] initWithFrame:CGRectZero providerUI:providerUI];
+        [providerButton addTarget:self
+                           action:@selector(didTapSignInButton:)
+                 forControlEvents:UIControlEventTouchUpInside];
+        
+        [providerButton.heightAnchor constraintEqualToConstant:(is3X
+                                                                ? kSignInButtonHeight3X
+                                                                : kSignInButtonHeight2X)].active = YES;
+        [container addArrangedSubview:providerButton];
     }
 }
 
