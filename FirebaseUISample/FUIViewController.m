@@ -41,11 +41,11 @@ typedef NS_ENUM(NSUInteger, FIRSimulationChoise) {
 };
 
 typedef NS_ENUM(NSUInteger, FIRProviders) {
-    kIDPEmail = 0,
-    kIDPFacebook,
-    kIDPGoogle,
-    kIDPTwitter,
-    kIDPPhone
+  kIDPEmail = 0,
+  kIDPGoogle,
+  kIDPFacebook,
+  kIDPTwitter,
+  kIDPPhone
 };
 
 @interface FUIViewController () <FUIAuthDelegate, NSURLSessionDataDelegate>
@@ -293,31 +293,30 @@ typedef NS_ENUM(NSUInteger, FIRProviders) {
 }
 
 - (void)populateListOfIDPs {
-    NSArray<NSIndexPath *> *selectedRows = [self.tableView indexPathsForSelectedRows];
-    selectedRows = [selectedRows sortedArrayUsingSelector:@selector(compare:)];
-    [_authProviders removeAllObjects];
-    
-    for (NSIndexPath *indexPath in selectedRows) {
-        if (indexPath.section == kSectionsProviders) {
-            switch (indexPath.row) {
-                case kIDPGoogle:
-                    [_authProviders addObject:[[FUIGoogleAuth alloc] init]];
-                    break;
-                case kIDPFacebook:
-                    [_authProviders addObject:[[FUIFacebookAuth alloc] init]];
-                    break;
-                case kIDPTwitter:
-                    [_authProviders addObject:[[FUITwitterAuth alloc] init]];
-                    break;
-                case kIDPPhone:
-                    [_authProviders addObject:[[FUIPhoneAuth alloc] initWithAuthUI:self.authUIMock]];
-                    break;
-                    
-                default:
-                    break;
-            }
-        }
+  NSArray<NSIndexPath *> *selectedRows = [self.tableView indexPathsForSelectedRows];
+  [_authProviders removeAllObjects];
+
+  for (NSIndexPath *indexPath in selectedRows) {
+    if (indexPath.section == kSectionsProviders) {
+      switch (indexPath.row) {
+        case kIDPGoogle:
+          [_authProviders addObject:[[FUIGoogleAuth alloc] init]];
+          break;
+        case kIDPFacebook:
+          [_authProviders addObject:[[FUIFacebookAuth alloc] init]];
+          break;
+        case kIDPTwitter:
+          [_authProviders addObject:[[FUITwitterAuth alloc] init]];
+          break;
+        case kIDPPhone:
+          [_authProviders addObject:[[FUIPhoneAuth alloc] initWithAuthUI:self.authUIMock]];
+          break;
+
+        default:
+          break;
+      }
     }
+  }
 }
 
 - (BOOL)isEmailEnabled {
