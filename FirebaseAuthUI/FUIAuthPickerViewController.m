@@ -156,7 +156,7 @@ static const CGFloat kButtonContainerCenterOffset3x = 48.5;
         [container addArrangedSubview:emailButton];
     }
     
-    for (id<FUIAuthProvider> providerUI in [self.authUI.providers reverseObjectEnumerator]) {
+    for (id<FUIAuthProvider> providerUI in self.authUI.providers) {
         UIButton *providerButton =
         [[FUIAuthSignInButton alloc] initWithFrame:CGRectZero providerUI:providerUI];
         [providerButton addTarget:self
