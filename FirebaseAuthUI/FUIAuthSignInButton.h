@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
     @param textColor Color of the button text.
  */
 - (id)initWithFrame:(CGRect)frame
-              image:(UIImage *)image
+              image:(nullable UIImage *)image
                text:(NSString *)text
     backgroundColor:(UIColor *)backgroundColor
           textColor:(UIColor *)textColor NS_DESIGNATED_INITIALIZER;

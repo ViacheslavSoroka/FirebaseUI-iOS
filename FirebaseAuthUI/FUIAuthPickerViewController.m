@@ -34,29 +34,52 @@ static NSString *const kErrorUserInfoEmailKey = @"FIRAuthErrorUserInfoEmailKey";
  */
 static NSString *const kEmailButtonAccessibilityID = @"EmailButtonAccessibilityID";
 
-/** @var kSignInButtonWidth
-    @brief The width of the sign in buttons.
+/** @var kSignInButtonPadding2X
+    @brief The horizontal 2x padding of the sign in buttons.
  */
-static const CGFloat kSignInButtonWidth = 220.0f;
+static const CGFloat kSignInButtonPadding2X = 66.5;
 
-/** @var kSignInButtonHeight
-    @brief The height of the sign in buttons.
+/** @var kSignInButtonPadding3X
+ @brief The horizontal 3x padding of the sign in buttons.
  */
-static const CGFloat kSignInButtonHeight = 40.0f;
+static const CGFloat kSignInButtonPadding3X = 73;
 
-/** @var kSignInButtonVerticalMargin
-    @brief The vertical margin between sign in buttons.
+/** @var kSignInButtonHeight2X
+    @brief The 2x height of the sign in buttons.
  */
-static const CGFloat kSignInButtonVerticalMargin = 24.0f;
+static const CGFloat kSignInButtonHeight2X = 44.0f;
 
-/** @var kButtonContainerBottomMargin
-    @brief The magin between sign in buttons and the bottom of the screen.
+/** @var kSignInButtonHeight3X
+ @brief The 3x height of the sign in buttons.
  */
-static const CGFloat kButtonContainerBottomMargin = 56.0f;
+static const CGFloat kSignInButtonHeight3X = 48.0f;
 
-@implementation FUIAuthPickerViewController {
-  UIView *_buttonContainerView;
-}
+/** @var kSignInButtonVerticalMargin2x
+    @brief The 2x vertical margin between sign in buttons.
+ */
+static const CGFloat kSignInButtonVerticalMargin2x = 16;
+
+/** @var kSignInButtonVerticalMargin3x
+ @brief The 3x vertical margin between sign in buttons.
+ */
+static const CGFloat kSignInButtonVerticalMargin3x = 17.7;
+
+/** @var kButtonContainerCenterOffset2x
+ @brief The 2x center offset.
+ */
+static const CGFloat kButtonContainerCenterOffset2x = 63.5;
+
+/** @var kButtonContainerCenterOffset3x
+ @brief The 3x center offset.
+ */
+static const CGFloat kButtonContainerCenterOffset3x = 70.5;
+
+@interface FUIAuthPickerViewController ()
+@property (nonatomic, strong) UIView *buttonContainerView;
+
+@end
+
+@implementation FUIAuthPickerViewController
 
 - (instancetype)initWithAuthUI:(FUIAuth *)authUI {
   return [self initWithNibName:NSStringFromClass([self class])
@@ -78,70 +101,74 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
 }
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
-
-  UIBarButtonItem *cancelBarButton =
-      [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
-                                                    target:self
-                                                    action:@selector(cancelAuthorization)];
-  self.navigationItem.leftBarButtonItem = cancelBarButton;
-  self.navigationItem.backBarButtonItem =
-      [[UIBarButtonItem alloc] initWithTitle:FUILocalizedString(kStr_Back)
-                                       style:UIBarButtonItemStylePlain
-                                      target:nil
-                                      action:nil];
-
-  NSInteger numberOfButtons = self.authUI.providers.count;
-  BOOL showEmailButton = !self.authUI.signInWithEmailHidden;
-  if (showEmailButton) {
-    ++numberOfButtons;
-  }
-  CGFloat buttonContainerViewHeight =
-      kSignInButtonHeight * numberOfButtons + kSignInButtonVerticalMargin * (numberOfButtons - 1);
-  CGRect buttonContainerViewFrame = CGRectMake(0, 0, kSignInButtonWidth, buttonContainerViewHeight);
-  _buttonContainerView = [[UIView alloc] initWithFrame:buttonContainerViewFrame];
-  [self.view addSubview:_buttonContainerView];
-
-  CGRect buttonFrame = CGRectMake(0, 0, kSignInButtonWidth, kSignInButtonHeight);
-  for (id<FUIAuthProvider> providerUI in self.authUI.providers) {
-    UIButton *providerButton =
-        [[FUIAuthSignInButton alloc] initWithFrame:buttonFrame providerUI:providerUI];
-    [providerButton addTarget:self
-                       action:@selector(didTapSignInButton:)
-             forControlEvents:UIControlEventTouchUpInside];
-    [_buttonContainerView addSubview:providerButton];
-
-    // Make the frame for the new button.
-    buttonFrame.origin.y += (kSignInButtonHeight + kSignInButtonVerticalMargin);
-  }
-
-  if (showEmailButton) {
-    UIColor *emailButtonBackgroundColor =
-        [UIColor colorWithRed:208.f/255.f green:2.f/255.f blue:27.f/255.f alpha:1.0];
-    UIButton *emailButton =
-        [[FUIAuthSignInButton alloc] initWithFrame:buttonFrame
-                                               image:[FUIAuthUtils imageNamed:@"ic_email"
-                                                                   fromBundle:FUIAuthBundleName]
-                                                text:FUILocalizedString(kStr_SignInWithEmail)
-                                     backgroundColor:emailButtonBackgroundColor
-                                           textColor:[UIColor whiteColor]];
-    [emailButton addTarget:self
-                    action:@selector(signInWithEmail)
-          forControlEvents:UIControlEventTouchUpInside];
-    emailButton.accessibilityIdentifier = kEmailButtonAccessibilityID;
-    [_buttonContainerView addSubview:emailButton];
-  }
-}
-
-- (void)viewDidLayoutSubviews {
-  [super viewDidLayoutSubviews];
-
-  CGFloat distanceFromCenterToBottom =
-      CGRectGetHeight(_buttonContainerView.frame) / 2.0f + kButtonContainerBottomMargin;
-  CGFloat centerY = CGRectGetHeight(self.view.bounds) - distanceFromCenterToBottom;
-  // Compensate for bounds adjustment if any.
-  centerY += self.view.bounds.origin.y;
-  _buttonContainerView.center = CGPointMake(self.view.center.x, centerY);
+    [super viewDidLoad];
+    
+    UIBarButtonItem *cancelBarButton =
+    [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+                                                  target:self
+                                                  action:@selector(cancelAuthorization)];
+    self.navigationItem.leftBarButtonItem = cancelBarButton;
+    self.navigationItem.backBarButtonItem =
+    [[UIBarButtonItem alloc] initWithTitle:FUILocalizedString(kStr_Back)
+                                     style:UIBarButtonItemStylePlain
+                                    target:nil
+                                    action:nil];
+    
+    NSInteger numberOfButtons = self.authUI.providers.count;
+    BOOL showEmailButton = !self.authUI.signInWithEmailHidden;
+    if (showEmailButton) {
+        ++numberOfButtons;
+    }
+    
+    BOOL is3X = UIScreen.mainScreen.scale > 2;
+    
+    UIView *view = self.view;
+    UIStackView *container = [UIStackView new];
+    container.axis = UILayoutConstraintAxisVertical;
+    container.spacing = is3X ? kSignInButtonVerticalMargin3x : kSignInButtonVerticalMargin2x;
+    self.buttonContainerView = container;
+    container.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    [view addSubview:container];
+    
+    NSArray *constr = @[[container.leftAnchor constraintEqualToAnchor:view.leftAnchor
+                                                             constant:is3X ? kSignInButtonPadding3X : kSignInButtonPadding2X],
+                        [container.rightAnchor constraintEqualToAnchor:view.rightAnchor
+                                                              constant:is3X ? kSignInButtonPadding3X : kSignInButtonPadding2X],
+                        [container.centerYAnchor constraintEqualToAnchor:view.centerYAnchor
+                                                              constant:(is3X
+                                                                        ? kButtonContainerCenterOffset3x
+                                                                        : kButtonContainerCenterOffset2x)]];
+    [NSLayoutConstraint activateConstraints:constr];
+    
+    for (id<FUIAuthProvider> providerUI in self.authUI.providers) {
+        UIButton *providerButton =
+        [[FUIAuthSignInButton alloc] initWithFrame:CGRectZero providerUI:providerUI];
+        [providerButton addTarget:self
+                           action:@selector(didTapSignInButton:)
+                 forControlEvents:UIControlEventTouchUpInside];
+        
+        [providerButton.heightAnchor constraintEqualToConstant:(is3X
+                                                                ? kSignInButtonHeight3X
+                                                                : kSignInButtonHeight2X)].active = YES;
+        [container addArrangedSubview:providerButton];
+    }
+    
+    if (showEmailButton) {
+        UIColor *emailButtonBackgroundColor =
+        [UIColor colorWithRed:35/255.f green:136/255.f blue:196/255.f alpha:1.0];
+        UIButton *emailButton =
+        [[FUIAuthSignInButton alloc] initWithFrame:CGRectZero
+                                             image:nil
+                                              text:FUILocalizedString(kStr_Email)
+                                   backgroundColor:emailButtonBackgroundColor
+                                         textColor:[UIColor whiteColor]];
+        [emailButton addTarget:self
+                        action:@selector(signInWithEmail)
+              forControlEvents:UIControlEventTouchUpInside];
+        emailButton.accessibilityIdentifier = kEmailButtonAccessibilityID;
+        [container addArrangedSubview:emailButton];
+    }
 }
 
 #pragma mark - Actions

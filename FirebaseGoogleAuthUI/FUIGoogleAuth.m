@@ -88,19 +88,19 @@ static NSString *const kSignInWithGoogle = @"SignInWithGoogle";
 }
 
 - (NSString *)signInLabel {
-  return FUILocalizedStringFromTableInBundle(kSignInWithGoogle, kTableName, kBundleName);
+    return self.shortName;//FUILocalizedStringFromTableInBundle(kSignInWithGoogle, kTableName, kBundleName);
 }
 
 - (UIImage *)icon {
-  return [FUIAuthUtils imageNamed:@"ic_google" fromBundle:kBundleName];
+    return nil;//[FUIAuthUtils imageNamed:@"ic_google" fromBundle:kBundleName];
 }
 
 - (UIColor *)buttonBackgroundColor {
-  return [UIColor whiteColor];
+  return [UIColor colorWithRed:211/255 green:31/255 blue:39/255 alpha:1];
 }
 
 - (UIColor *)buttonTextColor {
-  return [UIColor colorWithWhite:0 alpha:0.54f];
+  return UIColor.whiteColor;
 }
 
 - (void)signInWithEmail:(nullable NSString *)email

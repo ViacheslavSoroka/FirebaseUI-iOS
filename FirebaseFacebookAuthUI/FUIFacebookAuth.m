@@ -99,15 +99,15 @@ static NSString *const kFacebookDisplayName = @"FacebookDisplayName";
 }
 
 - (NSString *)signInLabel {
-  return FUILocalizedStringFromTableInBundle(kSignInWithFacebook, kTableName, kBundleName);
+    return self.shortName;//FUILocalizedStringFromTableInBundle(kSignInWithFacebook, kTableName, kBundleName);
 }
 
 - (UIImage *)icon {
-  return [FUIAuthUtils imageNamed:@"ic_facebook" fromBundle:kBundleName];
+    return nil;//[FUIAuthUtils imageNamed:@"ic_facebook" fromBundle:kBundleName];
 }
 
 - (UIColor *)buttonBackgroundColor {
-  return [UIColor colorWithRed:59.0f/255.0f green:89.0f/255.0f blue:152.0f/255.0f alpha:1.0f];
+  return [UIColor colorWithRed:41/255.0f green:69/255.0f blue:137/255.0f alpha:1.0f];
 }
 
 - (UIColor *)buttonTextColor {
