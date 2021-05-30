@@ -17,35 +17,45 @@
 #import "FUIAppDelegate.h"
 
 @import Firebase;
-@import FirebaseUI;
+@import FirebaseAuthUI;
 #import <GTMSessionFetcher/GTMSessionFetcherLogging.h>
-#import <TwitterKit/TWTRTwitter.h>
-
-// TODO: Update with Twitter key and secret
-NSString *const kTwitterConsumerKey = @"";
-NSString *const kTwitterConsumerSecret = @"";
 
 @implementation FUIAppDelegate
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  if (kTwitterConsumerKey.length && kTwitterConsumerSecret.length) {
-    [[TWTRTwitter sharedInstance] startWithConsumerKey:kTwitterConsumerKey
-                                        consumerSecret:kTwitterConsumerSecret];
-  }
-
+- (BOOL)application:(UIApplication *)application
+didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   [FIRApp configure];
   [GTMSessionFetcher setLoggingEnabled:YES];
   return YES;
 }
 
-- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString*, id> *)options {
+- (BOOL)application:(UIApplication *)app
+            openURL:(NSURL *)url
+            options:(NSDictionary<NSString*, id> *)options {
   NSString *sourceApplication = options[UIApplicationOpenURLOptionsSourceApplicationKey];
   return [self handleOpenUrl:url sourceApplication:sourceApplication];
 }
 
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(nullable NSString *)sourceApplication annotation:(id)annotation {
-  return [self handleOpenUrl:url sourceApplication:sourceApplication];
-}
+- (BOOL)application:(UIApplication *)application
+continueUserActivity:(nonnull NSUserActivity *)userActivity
+ restorationHandler:
+#if defined(__IPHONE_12_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_12_0)
+  (nonnull void (^)(NSArray<id<UIUserActivityRestoring>> *_Nullable))restorationHandler {
+#else
+  (nonnull void (^)(NSArray *_Nullable))restorationHandler {
+#endif  // __IPHONE_12_0
+    BOOL handled = [[FIRDynamicLinks dynamicLinks]
+                    handleUniversalLink:userActivity.webpageURL
+                    completion:^(FIRDynamicLink * _Nullable dynamicLink,
+                                 NSError * _Nullable error) {
+                      if (error) {
+                        NSLog(@"%@", error.description);
+                      } else {
+                        [self handleOpenUrl:dynamicLink.url sourceApplication:nil];
+                      }
+                    }];
+    return handled;
+  }
 
 - (BOOL)handleOpenUrl:(NSURL *)url sourceApplication:(nullable NSString *)sourceApplication {
   if ([FUIAuth.defaultAuthUI handleOpenURL:url sourceApplication:sourceApplication]) {

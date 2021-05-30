@@ -1,4 +1,6 @@
-# FirebaseUI for iOS — UI Bindings for Firebase [![Build Status](https://travis-ci.org/firebase/FirebaseUI-iOS.svg?branch=master)](https://travis-ci.org/firebase/FirebaseUI-iOS)
+# FirebaseUI for iOS — UI Bindings for Firebase
+
+![Anonymous Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/anonymousauth.yml/badge.svg) ![Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/auth.yml/badge.svg) ![Database](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/database.yml/badge.svg) ![Email Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/emailauth.yml/badge.svg) ![Facebook Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/facebookauth.yml/badge.svg) ![Firestore](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/firestore.yml/badge.svg) ![Google Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/googleauth.yml/badge.svg) ![OAuth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/oauth.yml/badge.svg) ![Phone Auth](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/phoneauth.yml/badge.svg) ![Storage](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/storage.yml/badge.svg) ![Samples](https://github.com/firebase/FirebaseUI-iOS/actions/workflows/sample.yml/badge.svg)
 
 FirebaseUI is an open-source library for iOS that allows you to quickly connect common UI elements to the [Firebase](https://firebase.google.com?utm_source=FirebaseUI-iOS) database for data storage, allowing views to be updated in realtime as they change, and providing simple interfaces for common tasks like displaying lists or collections of items.
 
@@ -10,60 +12,60 @@ FirebaseUI clients are also available for [Android](https://github.com/firebase/
 
 ## Installing FirebaseUI for iOS
 
-FirebaseUI supports iOS 8.0+. We recommend using [CocoaPods](https://cocoapods.org/pods/FirebaseUI), add
+FirebaseUI supports iOS 8.0+ and Xcode 11+. We recommend using [CocoaPods](https://cocoapods.org/pods/FirebaseUI), add
 the following to your `Podfile`:
 
 ```ruby
-pod 'FirebaseUI', '~> 4.0'       # Pull in all Firebase UI features
+pod 'FirebaseUI', '~> 8.0'       # Pull in all Firebase UI features
 ```
 
 If you don't want to use all of FirebaseUI, there are multiple subspecs which can selectively install subsets of the full feature set:
 
 ```ruby
-# Only pull in FirebaseUI Database features
-pod 'FirebaseUI/Database', '~> 4.0'
+# Only pull in Firestore features
+pod 'FirebaseUI/Firestore', '~> 8.0'
 
-# Only pull in FirebaseUI Storage features
-pod 'FirebaseUI/Storage', '~> 4.0'
+# Only pull in Database features
+pod 'FirebaseUI/Database', '~> 8.0'
 
-# Only pull in FirebaseUI Auth features
-pod 'FirebaseUI/Auth', '~> 4.0'
+# Only pull in Storage features
+pod 'FirebaseUI/Storage', '~> 8.0'
+
+# Only pull in Auth features
+pod 'FirebaseUI/Auth', '~> 8.0'
 
 # Only pull in Facebook login features
-pod 'FirebaseUI/Facebook', '~> 4.0'
+pod 'FirebaseUI/Facebook', '~> 8.0'
 
 # Only pull in Google login features
-pod 'FirebaseUI/Google', '~> 4.0'
-
-# Only pull in Twitter login features
-pod 'FirebaseUI/Twitter', '~> 4.0'
+pod 'FirebaseUI/Google', '~> 8.0'
 
 # Only pull in Phone Auth login features
-pod 'FirebaseUI/Phone', '~> 4.0'
+pod 'FirebaseUI/Phone', '~> 8.0'
 ```
 
 If you're including FirebaseUI in a Swift project, make sure you also have:
 
 ```ruby
-platform :ios, '8.0'
+platform :ios, '9.0'
 use_frameworks!
 ```
 
-Otherwise, you can download the latest version of the [FirebaseUI frameworks from the releases
-page](https://github.com/firebase/FirebaseUI-iOS/releases) or include the FirebaseUI
-Xcode project from this repo in your project. You also need to [add the Firebase
-framework](https://firebase.google.com/docs/ios/setup) to your project.
+Otherwise, you can include the FirebaseUI Xcode project from this repo in
+your project. You also need to 
+[add the Firebase framework](https://firebase.google.com/docs/ios/setup) 
+to your project.
 
 ## Documentation
 
 The READMEs for components of FirebaseUI can be found in their respective
 project folders.
 
-- [Auth](FirebaseAuthUI/README.md)
-- [PhoneAuth](FirebasePhoneAuthUI/README.md)
-- [Database](FirebaseDatabaseUI/README.md)
-- [Firestore](FirebaseFirestoreUI/README.md)
-- [Storage](FirebaseStorageUI/README.md)
+- [Auth](Auth/README.md)
+- [PhoneAuth](PhoneAuth/README.md)
+- [Database](Database/README.md)
+- [Firestore](Firestore/README.md)
+- [Storage](Storage/README.md)
 
 ## Local Setup
 
@@ -73,27 +75,26 @@ following commands to get your environment set up:
 ```bash
 $ git clone https://github.com/firebase/FirebaseUI-iOS.git
 $ cd FirebaseUI-iOS
+$ cd Auth # or PhoneAuth, Database, etc
 $ pod install
 ```
 
 Alternatively you can use `pod try FirebaseUI` to install the Objective-C or Swift sample projects.
 
-## Mandatory Sample Project Configuration
+## Sample Project Configuration
 
-You have to configure your Xcode project in order to run samples.
+You'll have to configure your Xcode project in order to run the samples.
 
-1. Your Xcode project should contain `GoogleService-Info.plist`, downloaded from [Firebase console](https://console.firebase.google.com) when you add your app to a Firebase project.<br>
-Copy `GoogleService-Info.plist` into sample the project folder (`samples/obj-c/GoogleService-Info.plist` or `samples/swift/GoogleService-Info.plist`).
+1. Your Xcode project should contain a `GoogleService-Info.plist`, downloaded from [Firebase console](https://console.firebase.google.com) when you add your app to a Firebase project.<br>
+Copy the `GoogleService-Info.plist` into the sample project folder (`samples/obj-c/GoogleService-Info.plist` or `samples/swift/GoogleService-Info.plist`).
 
 1. Update URL Types.<br>
 Go to `Project Settings -> Info tab -> Url Types` and update values for:
 	+ `REVERSED_CLIENT_ID` (get value from `GoogleService-Info.plist`)
 	+ `fb{your-app-id}` (put Facebook App Id)
-	+ `twitterkit-{consumer-key}` (put Twitter App Consumer key)
 
-1. Update `Info.plist` twitter and facebook configuration values
+1. Update `Info.plist` with Facebook configuration values
 	+ `FacebookAppID -> {your-app-id}` (put Facebook App Id)
-	+ `Fabric -> Kits -> KitInfo -> consumerKey / consumerSecret` (put Twitter App consumer key/secret). Please note that's it's not secure to store `consumerSecret` in the app itself.
 
 1. Enable Keychain Sharing.<br>
 Facebook SDK requires keychain sharing.<br>

@@ -18,7 +18,8 @@ FirebaseUI can be easily customized to fit in with the rest of your app's visual
 style, and it is open source, so you aren't constrained in realizing the user
 experience you want.
 
-Compatible FirebaseUI clients are also available for [Android](https://github.com/firebase/firebaseui-android/tree/master/auth)
+Compatible FirebaseUI Auth clients are also available for
+[Android](https://github.com/firebase/firebaseui-android/tree/master/auth)
 and [Web](https://github.com/firebase/firebaseui-web/).
 
 ## Table of Contents
@@ -33,10 +34,11 @@ Add the following to your `Podfile`:
 ```ruby
 pod 'FirebaseUI/Auth'
 
+pod 'FirebaseUI/Email'
 pod 'FirebaseUI/Google'
 pod 'FirebaseUI/Facebook'
-pod 'FirebaseUI/Twitter'
 pod 'FirebaseUI/Phone'
+pod 'FirebaseUI/OAuth'
 ```
 
 ### Configuring sign-in providers
@@ -47,20 +49,20 @@ Auth guides at the following links:
 - [Email and password](https://firebase.google.com/docs/auth/ios/password-auth#before_you_begin)
 - [Google](https://firebase.google.com/docs/auth/ios/google-signin#before_you_begin)
 - [Facebook](https://firebase.google.com/docs/auth/ios/facebook-login#before_you_begin)
-- [Twitter](https://firebase.google.com/docs/auth/ios/twitter-login#before_you_begin)
 - [Phone](https://firebase.google.com/docs/auth/ios/phone-auth#before_you_begin)
+- [Sign in with Apple](https://firebase.google.com/docs/auth/ios/apple#before_you_begin)
+  - For Sign in with Apple, read the [Comply with Apple anonymized data requirements](https://firebase.google.com/docs/auth/ios/apple#comply-with-apple-anonymized-data-requirements) section as well. 
 
 ## Using FirebaseUI for Authentication
 
 ### Configuration
 
 All operations, callbacks, UI customizations are done through an `FUIAuth`
-instance. The `FUIAuth` instance associated with the default `FIRAuth`
+instance. The `FUIAuth` instance associated with the default Firebase Auth
 instance can be accessed as follows:
 
 ```swift
 // Swift
-import Firebase
 import FirebaseAuthUI
 
 /* ... */
@@ -73,9 +75,10 @@ authUI?.delegate = self
 
 ```objective-c
 // Objective-C
-@import Firebase;
 @import FirebaseAuthUI;
-...
+
+/* ... */
+
 [FIRApp configure];
 FUIAuth *authUI = [FUIAuth defaultAuthUI];
 // You need to adopt a FUIAuthDelegate protocol to receive callback
@@ -86,42 +89,52 @@ This instance can then be configured with the providers you wish to support:
 
 ```swift
 // Swift
-import FirebaseGoogleAuthUI
-import FirebaseFacebookAuthUI
-import FirebaseTwitterAuthUI
-import FirebasePhoneAuthUI
+import FirebaseAuthUI
+
+/* ... */
 
 let providers: [FUIAuthProvider] = [
+  FUIEmailAuth(),
   FUIGoogleAuth(),
   FUIFacebookAuth(),
-  FUITwitterAuth(),
-  FUIPhoneAuth(authUI:FUIAuth.defaultAuthUI()),
+  FUIPhoneAuth(authUI: FUIAuth.defaultAuthUI()),
+  FUIOAuth.appleAuthProvider(),
+  FUIOAuth.twitterAuthProvider(),
+  FUIOAuth.githubAuthProvider(),
+  FUIOAuth.microsoftAuthProvider(),
+  FUIOAuth.yahooAuthProvider(),
 ]
-self.authUI?.providers = providers
+authUI?.providers = providers
 ```
 
 ```objective-c
 // Objective-C
-@import FirebaseGoogleAuthUI;
-@import FirebaseFacebookAuthUI;
-@import FirebaseTwitterAuthUI;
-@import FirebasePhoneAuthUI;
-...
+@import FirebaseAuthUI;
+
+/* ... */
+
 NSArray<id<FUIAuthProvider>> *providers = @[
+  [[FUIEmailAuth alloc] init],
   [[FUIGoogleAuth alloc] init],
   [[FUIFacebookAuth alloc] init],
-  [[FUITwitterAuth alloc] init],
-  [[FUIPhoneAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]]
+  [[FUIPhoneAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]],
+  [FUIOAuth appleAuthProvider],
+  [FUIOAuth twitterAuthProvider],
+  [FUIOAuth githubAuthProvider],
+  [FUIOAuth microsoftAuthProvider],
+  [FUIOAuth yahooAuthProvider]
 ];
-_authUI.providers = providers;
+self.authUI.providers = providers;
 ```
 
 For Google Sign-in support, add custom URL schemes to your Xcode project
 (step 1 of the [implement Google Sign-In documentation](https://developers.google.com/firebase/docs/auth/ios/google-signin#2_implement_google_sign-in)).
 
+For Sign in with Apple support, add the Sign in with Apple capability to your entitlements file.
+
 For Facebook Login support, follow step 3 and 4 of
 [Facebook login documentation](https://developers.google.com/firebase/docs/auth/ios/facebook-login#before_you_begin),
-and add custom URL schemes in step 4 of [Facebook SDK for iOS-Getting started documentation](https://developers.facebook.com/docs/ios/getting-started).
+and follow the [Facebook SDK for iOS Getting started documentation](https://developers.facebook.com/docs/ios/getting-started).
 
 Finally, add a call to handle the URL that your application receives at the end
 of the Google/Facebook authentication process.
@@ -160,8 +173,8 @@ present the `authViewController` obtain as instance as follows:
 // Present the auth view controller and then implement the sign in callback.
 let authViewController = authUI!.authViewController()
 
-func authUI(_ authUI: FUIAuth, didSignInWith user: FIRUser?, error: Error?) {
-  // handle user and error as necessary
+func authUI(_ authUI: FUIAuth, didSignInWithAuthDataResult authDataResult: AuthDataResult?, error: Error?) {
+  // handle user (`authDataResult.user`) and error as necessary
 }
 ```
 
@@ -171,13 +184,51 @@ UINavigationController *authViewController = [authUI authViewController];
 // Use authViewController as your root view controller,
 // or present it on top of an existing view controller.
 
-- (void)authUI:(FUIAuth *)authUI didSignInWithUser:(nullable FIRUser *)user error:(nullable NSError *)error {
-  // Implement this method to handle signed in user or error if any.
+- (void)authUI:(FUIAuth *)authUI
+    didSignInWithAuthDataResult:(nullable FIRAuthDataResult *)authDataResult
+         error:(nullable NSError *)error {
+  // Implement this method to handle signed in user (`authDataResult.user`) or error if any.
 }
 ```
 
+### Configuring Email Link Sign In
+To use email link sign in, you will first need to enable it in the Firebase Console. Additionally, you will also have to enable Firebase Dynamic Links.
+
+You can enable email link sign in by initializing an `FUIEmailAuth` instance with `FIREmailLinkAuthSignInMethod`. You will also need to provide a valid `FIRActionCodeSettings` object with `handleCodeInApp` set to true. Additionally, you need to whitelist the URL you pass to the iniatializer; you can do so in the Firebase Console (Authentication -> Sign in Methods -> Authorized domains).
+
+```objective-c
+// Objective-C
+FIRActionCodeSettings *actionCodeSettings = [[FIRActionCodeSettings alloc] init];
+actionCodeSettings.URL = [NSURL URLWithString:@"https://example.appspot.com"];
+actionCodeSettings.handleCodeInApp = YES;
+[actionCodeSettings setAndroidPackageName:@"com.firebase.example"
+                    installIfNotAvailable:NO
+                           minimumVersion:@"12"];
+```
+
+```swift
+// Swift
+var actionCodeSettings = ActionCodeSettings()
+actionCodeSettings.url = URL(string: "https://example.appspot.com")
+actionCodeSettings.handleCodeInApp = true
+actionCodeSettings.setAndroidPackageName("com.firebase.example", installIfNotAvailable: false, minimumVersion: "12")
+```
+
+Once you catch the deep link, you will need to pass it to the auth UI so it can be handled.
+
+```objective-c
+// Objective-C
+[FUIAuth.defaultAuthUI handleOpenURL:url sourceApplication:sourceApplication];
+```
+
+```swift
+// Swift
+Auth.defaultAuthUI.handleOpenURL(url, sourceApplication: sourceApplication)
+```
+We support cross device email link sign in for the normal flows. It is not supported with anonymous user upgrade. By default, cross device support is enabled. You can disable it setting `forceSameDevice` to false in the `FUIEmailAuth` initializer.
+
 ## Customizing FirebaseUI for authentication
-### Custom terms of Service (ToS) URL
+### Custom Terms of Service (ToS) and privacy policy URLs
 
 The Terms of Service URL for your application, which is displayed on the
 email/password account creation screen, can be specified as follows:
@@ -191,6 +242,13 @@ authUI?.tosurl = kFirebaseTermsOfService
 ```objective-c
 // Objective-C
 authUI.TOSURL = [NSURL URLWithString:@"https://example.com/tos"];
+```
+
+The same applies to the URL of your privacy policy:
+```swift
+// Swift
+let kFirebasePrivacyPolicy = URL(string: "https://policies.google.com/privacy")!
+authUI?.privacyPolicyURL = kFirebasePrivacyPolicy
 ```
 
 ### Custom strings
@@ -245,6 +303,7 @@ You can customize all email/password screens, including but not limited to:
 - Hiding the top `UINavigationBar`
 - Adding a `Cancel` button
 - Use a UI view other than `UITableView`
+
 Things that are not customizable:
 - `UIAlertController` popups (showing error labels instead)
 - Modifying the screen flow (combining screens or skipping particular screens)
@@ -322,3 +381,57 @@ parent classes. For example:
 
 Refer to the Objective-C and Swift samples for examples of how you can customize
 these views.
+
+## Handling auto-upgrade of anonymous users
+By default, the auto-upgrade of anonymous users is disabled. You can enable it 
+by simply changing the associated attribute of your Firebase Auth instance:
+```swift
+authUI?.shouldAutoUpgradeAnonymousUsers = true
+```
+
+Enabling auto-upgrade of anonymous users increases the complexity of your auth
+flow by adding several more edge cases that need to be handled. As opposed to
+normal auth, which only involves one step, auto-upgrade presents three steps
+with four possibilities total:
+- At app launch, anonymously authenticate the user. User state can be
+  accumulated on the anonymous user and linked to the non-anonymous account
+  later.
+- At some point in your app, present the auth flow and authenticate the user
+  using a non-anonymous auth method.
+- Following a successful auth attempt, if the user signs in to a new account,
+  the anonymous account and the new account can be linked together without
+  issue.
+- Otherwise, if logging into an existing user, FirebaseUI will return a merge
+  conflict error containing the resulting `FIRAuthDataResult` corresponding to
+  the existing account. This value should be used to login to the existing
+  account without linking to the anonymous user, as the two accounts may have
+  conflicting state (the anonymous account state will be discarded).
+
+```swift
+func authUI(_ authUI: FUIAuth, didSignInWith authDataResult: AuthDataResult?, error: Error?) {
+  if let error = error as NSError?,
+      error.code == FUIAuthErrorCode.mergeConflict.rawValue {
+    // Merge conflict error, discard the anonymous user and login as the existing
+    // non-anonymous user.
+    guard let credential = error.userInfo[FUIAuthCredentialKey] as? AuthCredential else {
+      print("Received merge conflict error without auth credential!")
+      return
+    }
+
+    Auth.auth().signInAndRetrieveData(with: credential) { (dataResult, error) in
+      if let error = error as NSError? {
+        print("Failed to re-login: \(error)")
+        return
+      }
+
+      // Handle successful login
+    }
+  } else if let error = error {
+    // Some non-merge conflict error happened.
+    print("Failed to log in: \(error)")
+    return
+  }
+
+  // Handle successful login
+}
+```

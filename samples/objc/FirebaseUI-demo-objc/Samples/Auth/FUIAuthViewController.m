@@ -17,7 +17,12 @@
 //
 
 @import Firebase;
-@import FirebaseUI;
+@import FirebaseOAuthUI;
+@import FirebaseEmailAuthUI;
+@import FirebaseAnonymousAuthUI;
+@import FirebaseGoogleAuthUI;
+@import FirebaseFacebookAuthUI;
+@import FirebasePhoneAuthUI;
 
 #import "FUIAuthViewController.h"
 #import "FUIAppDelegate.h"
@@ -42,15 +47,23 @@ NS_ENUM(NSUInteger, FIRProviders) {
   kIDPGoogle,
   kIDPFacebook,
   kIDPTwitter,
-  kIDPPhone
+  kIDPPhone,
+  kIDPAnonymous,
+  kIDPMicrosoft,
+  kIDPGitHub,
+  kIDPYahoo,
+  kIDPApple,
 };
 
 static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/terms/";
+static NSString *const kFirebasePrivacyPolicy = @"https://firebase.google.com/support/privacy/";
 
 @interface FUIAuthViewController () <FUIAuthDelegate>
 @property (weak, nonatomic) IBOutlet UITableViewCell *cellSignIn;
 @property (weak, nonatomic) IBOutlet UITableViewCell *cellName;
 @property (weak, nonatomic) IBOutlet UITableViewCell *cellEmail;
+@property (weak, nonatomic) IBOutlet UISwitch *emailSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *emailLabel;
 @property (weak, nonatomic) IBOutlet UITableViewCell *cellUID;
 @property (weak, nonatomic) IBOutlet UITableViewCell *anonymousSignIn;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *buttonAuthorization;
@@ -87,6 +100,7 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
   self.authUI = [FUIAuth defaultAuthUI];
 
   self.authUI.TOSURL = [NSURL URLWithString:kFirebaseTermsOfService];
+  self.authUI.privacyPolicyURL = [NSURL URLWithString:kFirebasePrivacyPolicy];
 
   //set AuthUI Delegate
   [self onAuthUIDelegateChanged:nil];
@@ -112,13 +126,26 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
                                                           inSection:kSectionsProviders]
                               animated:NO
                         scrollPosition:UITableViewScrollPositionNone];
-  // Disable twitter provider if token is not set.
-  if (!kTwitterConsumerKey.length || !kTwitterConsumerSecret.length) {
-    NSIndexPath *twitterRow = [NSIndexPath indexPathForRow:kIDPTwitter
-                                                 inSection:kSectionsProviders];
-    [self tableView:self.tableView cellForRowAtIndexPath:twitterRow].userInteractionEnabled = NO;
-    [self.tableView deselectRowAtIndexPath:twitterRow animated:NO];
-  }
+  [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:kIDPAnonymous
+                                                          inSection:kSectionsProviders]
+                              animated:NO
+                        scrollPosition:UITableViewScrollPositionNone];
+  [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:kIDPMicrosoft
+                                                          inSection:kSectionsProviders]
+                              animated:NO
+                        scrollPosition:UITableViewScrollPositionNone];
+  [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:kIDPGitHub
+                                                          inSection:kSectionsProviders]
+                              animated:NO
+                        scrollPosition:UITableViewScrollPositionNone];
+  [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:kIDPYahoo
+                                                          inSection:kSectionsProviders]
+                              animated:NO
+                        scrollPosition:UITableViewScrollPositionNone];
+  [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:kIDPApple
+                                                          inSection:kSectionsProviders]
+                              animated:NO
+                        scrollPosition:UITableViewScrollPositionNone];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -148,13 +175,23 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   if (indexPath.section == kSectionsAnonymousSignIn && indexPath.row == 0) {
-    if (_authUI.auth.currentUser.isAnonymous) {
-      [self showAlertWithTitlte:@"" message:@"Already signed in anonymously"];
+    FIRUser *currentUser = self.authUI.auth.currentUser;
+    if (currentUser.isAnonymous) {
+      // If the user is anonymous, delete the user to avoid dangling anonymous users.
+      if (currentUser.isAnonymous) {
+        [currentUser deleteWithCompletion:^(NSError * _Nullable error) {
+          if (error) {
+            [self showAlertWithTitlte:@"Error" message:error.localizedDescription];
+            return;
+          }
+          [self showAlertWithTitlte:@"" message:@"Anonymous user deleted"];
+        }];
+      }
       [tableView deselectRowAtIndexPath:indexPath animated:NO];
       return;
     }
     [self signOut];
-    [FUIAuth.defaultAuthUI.auth signInAnonymouslyWithCompletion:^(FIRUser *_Nullable user,
+    [FUIAuth.defaultAuthUI.auth signInAnonymouslyWithCompletion:^(FIRAuthDataResult *_Nullable authResult,
                                                                   NSError *_Nullable error) {
       if (error) {
         NSError *detailedError = error.userInfo[NSUnderlyingErrorKey];
@@ -179,12 +216,15 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
     self.cellUID.textLabel.text = user.uid;
 
     // If the user is anonymous, delete the user to avoid dangling anonymous users.
-    if (self.authUI.auth.currentUser.isAnonymous) {
-      self.buttonAuthorization.title = @"Delete Anonymous User";
-    } else {
+    if (auth.currentUser.isAnonymous) {
+      [_anonymousSignIn.textLabel setText:@"Delete Anonymous User"];
+    }
+    else {
+      [_anonymousSignIn.textLabel setText:@"Sign In Anonymously"];
       self.buttonAuthorization.title = @"Sign Out";
     }
   } else {
+    [_anonymousSignIn.textLabel setText:@"Sign In Anonymously"];
     self.cellSignIn.textLabel.text = @"Not signed-in";
     self.cellName.textLabel.text = @"";
     self.cellEmail.textLabel.text = @"";
@@ -215,17 +255,22 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
 }
 
 - (IBAction)onAuthorization:(id)sender {
-  if (!self.auth.currentUser) {
-
+  if (!_auth.currentUser || _auth.currentUser.isAnonymous) {
+    FUIAuth.defaultAuthUI.autoUpgradeAnonymousUsers = YES;
     _authUI.providers = [self getListOfIDPs];
-    _authUI.signInWithEmailHidden = ![self isEmailEnabled];
 
-    BOOL shouldSkipPhoneAuthPicker = self.authUI.providers.count == 1 &&
-        [self.authUI.providers.firstObject.providerID isEqualToString:FIRPhoneAuthProviderID] &&
-            self.authUI.isSignInWithEmailHidden;
-    if (shouldSkipPhoneAuthPicker) {
-      FUIPhoneAuth *provider = self.authUI.providers.firstObject;
-      [provider signInWithPresentingViewController:self phoneNumber:nil];
+    NSString *providerID = self.authUI.providers.firstObject.providerID;
+    BOOL isPhoneAuth = [providerID isEqualToString:FIRPhoneAuthProviderID];
+    BOOL isEmailAuth = [providerID isEqualToString:FIREmailAuthProviderID];
+    BOOL shouldSkipAuthPicker = self.authUI.providers.count == 1 && (isPhoneAuth || isEmailAuth);
+    if (shouldSkipAuthPicker) {
+      if (isPhoneAuth) {
+        FUIPhoneAuth *provider = self.authUI.providers.firstObject;
+        [provider signInWithPresentingViewController:self phoneNumber:nil];
+      } else if (isEmailAuth) {
+        FUIEmailAuth *provider = self.authUI.providers.firstObject;
+        [provider signInWithPresentingViewController:self email:nil];
+      }
     } else {
       UINavigationController *controller = [self.authUI authViewController];
       if (_isCustomAuthDelegateSelected) {
@@ -238,22 +283,51 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
   }
 }
 
+- (IBAction)onEmailSwitchValueChanged:(UISwitch *)sender {
+  if (sender.isOn) {
+    self.emailLabel.text = @"Password";
+  } else {
+    self.emailLabel.text = @"Link";
+  }
+}
+
 #pragma mark - FUIAuthDelegate methods
 
 // this method is called only when FUIAuthViewController is delgate of AuthUI
 - (void)authUI:(FUIAuth *)authUI
     didSignInWithAuthDataResult:(nullable FIRAuthDataResult *)authDataResult
+                            URL:(nullable NSURL *)url
                           error:(nullable NSError *)error {
   if (error) {
     if (error.code == FUIAuthErrorCodeUserCancelledSignIn) {
       [self showAlertWithTitlte:@"Error" message:error.localizedDescription];
-    } else {
-      NSError *detailedError = error.userInfo[NSUnderlyingErrorKey];
-      if (!detailedError) {
-        detailedError = error;
-      }
-      NSLog(@"ERROR: %@", detailedError.localizedDescription);
+      return;
     }
+    if (error.code == FUIAuthErrorCodeMergeConflict) {
+      FIRAuthCredential *credential = error.userInfo[FUIAuthCredentialKey];
+      [[FUIAuth defaultAuthUI].auth
+          signInWithCredential:credential
+                    completion:^(FIRAuthDataResult *_Nullable authResult,
+                                 NSError *_Nullable error) {
+        if (error) {
+          [self showAlertWithTitlte:@"Sign-In error" message:error.description];
+          NSLog(@"%@",error.description);
+          return;
+        }
+        NSString *anonymousUserID = authUI.auth.currentUser.uid;
+        NSString *messsage = [NSString stringWithFormat:@"A merge conflict occurred. The old user"
+            " ID was: %@. You are now signed in with the following credential type: %@",
+            anonymousUserID, [credential.provider uppercaseString]];
+        [self showAlertWithTitlte:@"Merge Conflict" message:messsage];
+        NSLog(@"%@", messsage);
+      }];
+      return;
+    }
+    NSError *detailedError = error.userInfo[NSUnderlyingErrorKey];
+    if (!detailedError) {
+      detailedError = error;
+    }
+    NSLog(@"ERROR: %@", detailedError.localizedDescription);
   }
 }
 
@@ -279,21 +353,9 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
 
 - (void)signOut {
   NSError *error;
-  FIRUser *currentUser = self.authUI.auth.currentUser;
-  // If the user is anonymous, delete the user to avoid dangling anonymous users.
-  if (currentUser.isAnonymous) {
-    [currentUser deleteWithCompletion:^(NSError * _Nullable error) {
-      if (error) {
-        [self showAlertWithTitlte:@"Error" message:error.localizedDescription];
-        return;
-      }
-      [self showAlertWithTitlte:@"" message:@"Anonymous user deleted"];
-    }];
-  } else {
-    [self.authUI signOutWithError:&error];
-    if (error) {
-      [self showAlertWithTitlte:@"Error" message:error.localizedDescription];
-    }
+  [self.authUI signOutWithError:&error];
+  if (error) {
+    [self showAlertWithTitlte:@"Error" message:error.localizedDescription];
   }
 }
 
@@ -310,47 +372,82 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
 
 }
 
-+ (NSArray *)getAllIDPs {
-  NSArray<NSIndexPath *> *selectedRows = @[
-    [NSIndexPath indexPathForRow:kIDPGoogle inSection:kSectionsProviders],
-    [NSIndexPath indexPathForRow:kIDPFacebook inSection:kSectionsProviders],
-    [NSIndexPath indexPathForRow:kIDPTwitter inSection:kSectionsProviders],
-    [NSIndexPath indexPathForRow:kIDPPhone inSection:kSectionsProviders]
-  ];
-  return [self getListOfIDPs:selectedRows useCustomScopes:NO];
-}
-
 - (NSArray *)getListOfIDPs {
-  return [[self class] getListOfIDPs:[self.tableView indexPathsForSelectedRows] useCustomScopes:_customScopeSwitch.isOn];
+  return [[self class] getListOfIDPs:[self.tableView indexPathsForSelectedRows]
+                     useCustomScopes:_customScopeSwitch.isOn
+                        useEmailLink:_emailSwitch.isOn];
 }
 
-+ (NSArray *)getListOfIDPs:(NSArray<NSIndexPath *> *)selectedRows useCustomScopes:(BOOL)useCustomScopes {
++ (NSArray *)getListOfIDPs:(NSArray<NSIndexPath *> *)selectedRows
+           useCustomScopes:(BOOL)useCustomScopes
+              useEmailLink:(BOOL)useEmaiLink {
   NSMutableArray *providers = [NSMutableArray new];
 
   for (NSIndexPath *indexPath in selectedRows) {
     if (indexPath.section == kSectionsProviders) {
       id<FUIAuthProvider> provider;
       switch (indexPath.row) {
+        case kIDPEmail:
+          if (useEmaiLink) {
+            // ActionCodeSettings for email link sign-in.
+            FIRActionCodeSettings *actionCodeSettings = [[FIRActionCodeSettings alloc] init];
+            actionCodeSettings.URL = [NSURL URLWithString:@"https://fb-sa-1211.appspot.com"];
+            actionCodeSettings.handleCodeInApp = YES;
+            [actionCodeSettings setAndroidPackageName:@"com.firebase.uidemo"
+                                installIfNotAvailable:NO
+                                       minimumVersion:@"12"];
+
+            provider = [[FUIEmailAuth alloc] initAuthAuthUI:[FUIAuth defaultAuthUI]
+                                               signInMethod:FIREmailLinkAuthSignInMethod
+                                            forceSameDevice:NO
+                                      allowNewEmailAccounts:YES
+                                         requireDisplayName:YES
+                                          actionCodeSetting:actionCodeSettings];
+          } else {
+            provider = [[FUIEmailAuth alloc] initAuthAuthUI:[FUIAuth defaultAuthUI]
+                                               signInMethod:FIREmailPasswordAuthSignInMethod
+                                            forceSameDevice:NO
+                                      allowNewEmailAccounts:YES
+                                         requireDisplayName:NO
+                                          actionCodeSetting:[[FIRActionCodeSettings alloc] init]];
+          }
+          break;
         case kIDPGoogle:
-          provider = useCustomScopes ? [[FUIGoogleAuth alloc] initWithScopes:@[kGoogleUserInfoEmailScope,
+          provider = useCustomScopes ? [[FUIGoogleAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]
+                                                                      scopes:@[kGoogleUserInfoEmailScope,
                                                                                kGoogleUserInfoProfileScope,
                                                                                kGoogleGamesScope,
                                                                                kGooglePlusMeScope]]
-                                     : [[FUIGoogleAuth alloc] init];
+                                     : [[FUIGoogleAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]];
           break;
         case kIDPFacebook:
-          provider = useCustomScopes ? [[FUIFacebookAuth alloc] initWithPermissions:@[@"email",
-                                                                                        @"user_friends",
-                                                                                        @"ads_read"]]
-                                     :[[FUIFacebookAuth alloc] init];
+          provider = useCustomScopes ? [[FUIFacebookAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]
+                                                                   permissions:@[@"email",
+                                                                                @"user_friends",
+                                                                                @"ads_read"]]
+                                     :[[FUIFacebookAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]];
           break;
         case kIDPTwitter:
-          provider = [[FUITwitterAuth alloc] init];
+          provider = [FUIOAuth twitterAuthProvider];
           break;
         case kIDPPhone:
           provider = [[FUIPhoneAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]];
           break;
-
+        case kIDPAnonymous:
+          provider = [[FUIAnonymousAuth alloc] initWithAuthUI:[FUIAuth defaultAuthUI]];
+          break;
+        case kIDPMicrosoft:
+          provider = [FUIOAuth microsoftAuthProvider];
+          break;
+        case kIDPGitHub:
+          provider = [FUIOAuth githubAuthProvider];
+          break;
+        case kIDPYahoo:
+          provider = [FUIOAuth yahooAuthProvider];
+          break;
+        case kIDPApple:
+          provider = [FUIOAuth appleAuthProvider];
+          break;
         default:
           break;
       }
@@ -362,13 +459,6 @@ static NSString *const kFirebaseTermsOfService = @"https://firebase.google.com/t
   }
 
   return providers;
-}
-
-- (BOOL)isEmailEnabled {
-  NSArray<NSIndexPath *> *selectedRows = [self.tableView indexPathsForSelectedRows];
-  return [selectedRows containsObject:[NSIndexPath
-                                       indexPathForRow:kIDPEmail
-                                       inSection:kSectionsProviders]];
 }
 
 @end

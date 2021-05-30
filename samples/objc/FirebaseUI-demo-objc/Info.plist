@@ -27,7 +27,7 @@
 			<string></string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>REVERSED_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.1085102361755-k242p3jluflir9qcf222uo0mf1q9vfri</string>
 			</array>
 		</dict>
 		<dict>
@@ -37,26 +37,16 @@
 			<string></string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fb{your-app-id}</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string></string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>twitterkit-{consumer-key}</string>
+				<string>fb452491954956225</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1.0.0.4</string>
 	<key>FacebookAppID</key>
-	<string>{your-app-id}</string>
+	<string>452491954956225</string>
 	<key>FacebookDisplayName</key>
-	<string>{your-app-name}</string>
+	<string>Facebook App</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>fbapi</string>
@@ -71,7 +61,7 @@
 		<string>remote-notification</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<string>Main</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>

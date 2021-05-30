@@ -16,7 +16,7 @@
 
 import UIKit
 
-import FirebaseUI
+import FirebaseStorageUI
 
 class StorageViewController: UIViewController {
 
@@ -24,6 +24,10 @@ class StorageViewController: UIViewController {
   @IBOutlet fileprivate var textField: UITextField!
 
   fileprivate var storageRef = Storage.storage().reference()
+  
+  override func viewDidLoad() {
+    self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Clear Cache", style: .plain, target: self, action: #selector(flushCache))
+  }
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
@@ -34,11 +38,11 @@ class StorageViewController: UIViewController {
     // Notification boilerplate to handle keyboard appearance/disappearance
     NotificationCenter.default.addObserver(self,
                                                      selector: #selector(keyboardWillShow),
-                                                     name: NSNotification.Name.UIKeyboardWillShow,
+                                                     name: UIResponder.keyboardWillShowNotification,
                                                      object: nil)
     NotificationCenter.default.addObserver(self,
                                                      selector: #selector(keyboardWillHide),
-                                                     name: NSNotification.Name.UIKeyboardWillHide,
+                                                     name: UIResponder.keyboardWillHideNotification,
                                                      object: nil)
   }
 
@@ -50,11 +54,18 @@ class StorageViewController: UIViewController {
     self.storageRef = Storage.storage().reference(withPath: url.path)
 
     self.imageView.sd_setImage(with: self.storageRef,
-      placeholderImage: nil) { (image, error, cacheType, storageRef) in
+                               maxImageSize: 10000000,
+                               placeholderImage: nil,
+                               options: [.progressiveLoad]) { (image, error, cacheType, storageRef) in
       if let error = error {
         print("Error loading image: \(error)")
       }
     }
+  }
+  
+  @objc private func flushCache() {
+    SDImageCache.shared.clearMemory()
+    SDImageCache.shared.clearDisk()
   }
 
   // MARK: Keyboard boilerplate
@@ -64,13 +75,13 @@ class StorageViewController: UIViewController {
 
   @objc fileprivate func keyboardWillShow(_ notification: Notification) {
     let userInfo = (notification as NSNotification).userInfo!
-    let endFrameValue = userInfo[UIKeyboardFrameEndUserInfoKey] as! NSValue
+    let endFrameValue = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as! NSValue
     let endHeight = endFrameValue.cgRectValue.size.height
 
     self.bottomConstraint.constant = endHeight
 
-    let curve = UIViewAnimationCurve(rawValue: userInfo[UIKeyboardAnimationCurveUserInfoKey] as! Int)!
-    let duration = userInfo[UIKeyboardAnimationDurationUserInfoKey] as! Double
+    let curve = UIView.AnimationCurve(rawValue: userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as! Int)!
+    let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! Double
 
     UIView.setAnimationCurve(curve)
     UIView.animate(withDuration: duration, animations: {
@@ -82,8 +93,8 @@ class StorageViewController: UIViewController {
     self.bottomConstraint.constant = 0
 
     let userInfo = (notification as NSNotification).userInfo!
-    let curve = UIViewAnimationCurve(rawValue: userInfo[UIKeyboardAnimationCurveUserInfoKey] as! Int)!
-    let duration = userInfo[UIKeyboardAnimationDurationUserInfoKey] as! Double
+    let curve = UIView.AnimationCurve(rawValue: userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as! Int)!
+    let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! Double
 
     UIView.setAnimationCurve(curve)
     UIView.animate(withDuration: duration, animations: {

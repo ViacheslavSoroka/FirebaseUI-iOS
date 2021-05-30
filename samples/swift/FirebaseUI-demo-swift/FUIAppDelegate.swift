@@ -16,28 +16,25 @@
 
 import UIKit
 import Firebase
-import FirebaseUI
+import FirebaseAuthUI
 import GTMSessionFetcher
-import TwitterKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
   var window: UIWindow?
 
-  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // Successfully running this sample requires an app in Firebase and an
     // accompanying valid GoogleService-Info.plist file.
     FirebaseApp.configure()
-    TWTRTwitter.sharedInstance().start(withConsumerKey: "consumer-key",
-                                       consumerSecret: "consumer-secret");
     GTMSessionFetcher.setLoggingEnabled(true)
     return true
   }
   
   @available(iOS 9.0, *)
-  func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any]) -> Bool {
-    let sourceApplication = options[UIApplicationOpenURLOptionsKey.sourceApplication] as! String?
+  func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any]) -> Bool {
+    let sourceApplication = options[UIApplication.OpenURLOptionsKey.sourceApplication] as! String?
     return self.handleOpenUrl(url, sourceApplication: sourceApplication)
   }
 

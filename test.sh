@@ -1,34 +1,20 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -euxo pipefail
 
 EXIT_STATUS=0
 
+module_name="$1"
+
+pushd "$module_name";
 (xcodebuild \
-  -workspace FirebaseUI.xcworkspace \
-  -scheme FirebaseUI \
+  -workspace "$module_name.xcworkspace" \
+  -scheme "$module_name" \
   -sdk iphonesimulator \
-  -destination 'platform=iOS Simulator,OS=11.2,name=iPhone X' \
-  build \
-  test \
+  -destination 'platform=iOS Simulator,OS=latest,name=iPhone 11 Pro' \
+  clean build test \
   ONLY_ACTIVE_ARCH=YES \
-  CODE_SIGNING_REQUIRED=NO \
-  | xcpretty) || EXIT_STATUS=$?
-
-# It'd be nice to test building the objc sample as a simple
-# integration test, but we don't have a GoogleService-Info.plist file
-# on Travis.
-# cd samples/objc
-# pod install
-
-# (xcodebuild \
-#   -workspace FirebaseUI-demo-objc.xcworkspace \
-#   -scheme FirebaseUI-demo-objc \
-#   -sdk iphonesimulator \
-#   -destination 'platform=iOS Simulator,name=iPhone 7' \
-#   build \
-#   ONLY_ACTIVE_ARCH=YES \
-#   CODE_SIGNING_REQUIRED=NO \
-#   | xcpretty) || EXIT_STATUS=$?
+  | xcpretty) || EXIT_STATUS=$?;
+popd;
 
 exit $EXIT_STATUS

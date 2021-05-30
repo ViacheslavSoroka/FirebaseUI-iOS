@@ -16,7 +16,7 @@
 //  limitations under the License.
 //
 
-@import FirebaseUI;
+@import FirebaseAuthUI;
 
 @interface FUICustomAuthDelegate : NSObject <FUIAuthDelegate>
 

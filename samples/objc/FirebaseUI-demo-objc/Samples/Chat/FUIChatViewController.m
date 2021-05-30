@@ -14,7 +14,7 @@
 //  limitations under the License.
 //
 
-@import FirebaseUI;
+@import FirebaseDatabaseUI;
 #import <FirebaseAuth/FirebaseAuth.h>
 
 #import "FUIChatViewController.h"

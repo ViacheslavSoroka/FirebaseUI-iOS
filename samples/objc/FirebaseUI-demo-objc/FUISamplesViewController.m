@@ -16,7 +16,7 @@
 //  limitations under the License.
 //
 
-@import FirebaseUI;
+@import UIKit;
 
 #import "FUISamplesViewController.h"
 

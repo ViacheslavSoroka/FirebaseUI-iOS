@@ -16,7 +16,7 @@
 //  limitations under the License.
 //
 
-@import FirebaseUI;
+@import FirebaseEmailAuthUI;
 
 @interface FUICustomPasswordSignInViewController : FUIPasswordSignInViewController
 
